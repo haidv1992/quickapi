@@ -1,0 +1,29 @@
+2023-05-07 17:31:01,900 - INFO - Started server process [10517]
+2023-05-07 17:31:01,900 - INFO - Started server process [10516]
+2023-05-07 17:31:01,900 - INFO - Waiting for application startup.
+2023-05-07 17:31:01,900 - INFO - Waiting for application startup.
+2023-05-07 17:31:01,923 - INFO - Application startup complete.
+2023-05-07 17:31:01,923 - INFO - Application startup complete.
+2023-05-07 17:31:01,924 - INFO - Started server process [10518]
+2023-05-07 17:31:01,924 - INFO - Waiting for application startup.
+2023-05-07 17:31:01,936 - INFO - Started server process [10519]
+2023-05-07 17:31:01,937 - INFO - Waiting for application startup.
+2023-05-07 17:31:01,940 - INFO - Application startup complete.
+2023-05-07 17:31:01,952 - INFO - Application startup complete.
+2023-05-07 17:31:54,673 - INFO - 127.0.0.1:50099 - "GET / HTTP/1.1" 404
+2023-05-07 17:32:37,300 - INFO - Shutting down
+2023-05-07 17:32:37,316 - INFO - Shutting down
+2023-05-07 17:32:37,331 - INFO - Shutting down
+2023-05-07 17:32:37,331 - INFO - Shutting down
+2023-05-07 17:32:37,402 - INFO - Waiting for application shutdown.
+2023-05-07 17:32:37,403 - INFO - Application shutdown complete.
+2023-05-07 17:32:37,404 - INFO - Finished server process [10517]
+2023-05-07 17:32:37,418 - INFO - Waiting for application shutdown.
+2023-05-07 17:32:37,419 - INFO - Application shutdown complete.
+2023-05-07 17:32:37,419 - INFO - Finished server process [10516]
+2023-05-07 17:32:37,433 - INFO - Waiting for application shutdown.
+2023-05-07 17:32:37,433 - INFO - Waiting for application shutdown.
+2023-05-07 17:32:37,434 - INFO - Application shutdown complete.
+2023-05-07 17:32:37,434 - INFO - Application shutdown complete.
+2023-05-07 17:32:37,435 - INFO - Finished server process [10519]
+2023-05-07 17:32:37,435 - INFO - Finished server process [10518]

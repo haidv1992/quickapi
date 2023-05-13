@@ -1,8 +1,8 @@
 """Auto-generated migration
 
-Revision ID: ed38b9a72d95
+Revision ID: 1ab4901830a2
 Revises: 
-Create Date: 2023-05-06 00:46:14.719091
+Create Date: 2023-05-10 19:30:45.094075
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'ed38b9a72d95'
+revision = '1ab4901830a2'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,11 +21,13 @@ def upgrade() -> None:
     op.create_table('posts',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=True),
+    sa.Column('content', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('published_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_posts_content'), 'posts', ['content'], unique=False)
     op.create_index(op.f('ix_posts_id'), 'posts', ['id'], unique=False)
     op.create_index(op.f('ix_posts_name'), 'posts', ['name'], unique=False)
     op.create_table('user',
@@ -47,5 +49,6 @@ def downgrade() -> None:
     op.drop_table('user')
     op.drop_index(op.f('ix_posts_name'), table_name='posts')
     op.drop_index(op.f('ix_posts_id'), table_name='posts')
+    op.drop_index(op.f('ix_posts_content'), table_name='posts')
     op.drop_table('posts')
     # ### end Alembic commands ###

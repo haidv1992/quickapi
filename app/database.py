@@ -1,14 +1,12 @@
-# app/database.py
-import asyncio
-import os
-
-from alembic.command import revision, upgrade
+import logging
+from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
-from app.config import Config
-from alembic.config import Config as AlembicConfig
+from app.config import DB_CONFIG, TIME_ZONE
 
 Base = declarative_base()
+
+logger = logging.getLogger(__name__)
 
 
 class AsyncDatabaseSession:
@@ -19,41 +17,26 @@ class AsyncDatabaseSession:
     def __getattr__(self, name):
         return getattr(self._session, name)
 
-    def init(self):
+    async def init(self):
         self._engine = create_async_engine(
-            Config.DB_CONFIG,
+            DB_CONFIG,
             future=True,
             echo=True,
+            connect_args={"server_settings": {"timezone": TIME_ZONE}}
         )
         self._session = sessionmaker(
             self._engine, expire_on_commit=False, class_=AsyncSession
-        )()
+        )
 
-    async def migrate(self):
-        alembic_config = AlembicConfig("alembic.ini")
+    @asynccontextmanager
+    async def get_session(self):
+        if self._session is None:
+            await self.init()
+        async with self._session() as session:
+            yield session
 
-        def do_revision():
-            revision(alembic_config, autogenerate=True, message="Auto-generated migration")
-
-        def do_upgrade(revision):
-            upgrade(alembic_config, revision)
-
-        loop = asyncio.get_event_loop()
-        try:
-            os.environ['AUTO_GENERATE_MIGRATE'] = '1'
-            await loop.run_in_executor(None, do_revision)
-
-        except Exception as e:
-            print(f"Error do_revision: {e}")
-            print("Continuing execution...")
-
-        try:
-            os.environ['AUTO_GENERATE_MIGRATE'] = '0'  # Reset the environment variable
-            await loop.run_in_executor(None, do_upgrade, "head")
-        except Exception as e:
-            print(f"Error do_upgrade: {e}")
-            print("Continuing execution...")
-
+    async def close(self):
+        await self._engine.dispose()
 
 
 db = AsyncDatabaseSession()

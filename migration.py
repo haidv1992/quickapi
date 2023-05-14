@@ -3,16 +3,13 @@ import os
 from pathlib import Path
 
 import alembic
-from alembic import command
+
 from alembic.config import Config
-from alembic.runtime.migration import MigrationContext
-from sqlalchemy import create_engine, MetaData
 
-from app.config import IS_LOCAL, DB_CONFIG
-
+from app.config import IS_LOCAL
 
 def check_for_changes_and_migrate():
-    api_dir = Path(__file__).parent / "api"
+    api_dir = Path(__file__).parent / "app/api"
     db_files = list(api_dir.rglob('db.py'))
     if not db_files:
         print("No db.py files found. Skipping migrations...")
@@ -36,8 +33,7 @@ def check_for_changes_and_migrate():
 
 
 def run_migrations():
-
-    if (IS_LOCAL and check_for_changes_and_migrate()):
+    if check_for_changes_and_migrate():
         try:
             alembic_args = [
                 '--raiseerr',

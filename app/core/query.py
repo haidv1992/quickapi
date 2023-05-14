@@ -1,16 +1,15 @@
 # app/quickapi/core/query.py
 from typing import List, Optional, Any, Dict, Type
 
-from fastapi.encoders import jsonable_encoder
-from sqlalchemy import and_, or_, not_, desc, asc, update, delete
+from sqlalchemy import and_, desc, asc, update, delete
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, joinedload
-from fastapi import Depends, Query
+from fastapi import Depends
 import sqlalchemy as sa
 
-from app.database import Base
+from app.core.database import Base
 
 
 class Pagination(BaseModel):

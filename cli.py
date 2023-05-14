@@ -1,22 +1,25 @@
 # cli.py
 import argparse
 import asyncio
-import os
 import contextlib
+import os
 from fastapi_users.exceptions import UserAlreadyExists
 
-from api.user.db import get_user_db
-from api.user.schemas import UserCreate
-from api.user.users import get_user_manager
-from app.database import db
+from app.api.user.db import get_user_db
+from app.api.user.schemas import UserCreate
+from app.api.user.users import get_user_manager
 import click
 
-API_DIR = "api"
+from app.core.database import db
+
+API_DIR = "app/api"
 
 
-def generate_api():
+def generate_api(api_input):
+    global api_name
     global api_prefix
-    api_prefix = f"{api_name}s"
+    api_name = api_input
+    api_prefix = f"{api_input}s"
     api_path = os.path.join(API_DIR, api_name)
     os.makedirs(api_path, exist_ok=True)
 
@@ -44,6 +47,7 @@ class {api_name.capitalize()}(Base):
     with open(os.path.join(api_path, "db.py"), "w") as db_file:
         db_file.write(db_file_content)
 
+
 def generate_controller_file(api_path):
     controller_file_content = f'''from api.{api_name}.db import {api_name.capitalize()}
 from app.quickapi.core.quickapi import QuickAPI
@@ -68,6 +72,7 @@ async def delete_{api_name}(id: int):
 
     with open(os.path.join(api_path, "controller.py"), "w") as controller_file:
         controller_file.write(controller_file_content)
+
 
 def generate_router_file(api_path):
     router_file_content = f'''from fastapi import APIRouter, Request
@@ -129,15 +134,11 @@ def generate_model_file(api_path):
         model_file.write(model_file_content)
 
 
-get_async_session_context = contextlib.asynccontextmanager(db.get_async_session)
-get_user_db_context = contextlib.asynccontextmanager(get_user_db)
-get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
-
-
 async def create_user(email: str, password: str, is_superuser: bool = False):
     try:
-        db.init()
-        async with get_async_session_context() as session:
+        get_user_db_context = contextlib.asynccontextmanager(get_user_db)
+        get_user_manager_context = contextlib.asynccontextmanager(get_user_manager)
+        async with db.get_session() as session:
             async with get_user_db_context(session) as user_db:
                 async with get_user_manager_context(user_db) as user_manager:
                     user = await user_manager.create(
@@ -156,27 +157,30 @@ async def main():
     parser.add_argument("command", choices=["make:api", "make:user"])
 
     args = parser.parse_args()
-    global api_name
-    api_name = ""
+    api_input = ""
     if args.command == "make:api":
-        while not api_name:
-            api_name = input("Please enter the name of the API: ")
-
-        generate_api()
+        while not api_input:
+            api_input = input("Please enter the name of the API: ")
+        generate_api(api_input)
 
     elif args.command == "make:user":
         email = ""
         while not email:
-            email = input("Please enter the email: ").strip()
+            email = input(f"Please enter the email (default is admin@quickapi.com): ").strip()
+            if not email:
+                email = "admin@quickapi.com"
 
         password = ""
         while not password:
-            password = input("Please enter the password: ").strip()
+            password = input("Please enter the password (default is admin@123): ").strip()
+            if not password:
+                password = "admin@123"
 
         is_superuser = ""
         while is_superuser not in ["0", "1"]:
-            is_superuser = input("Please enter the superuser 1/0: ").strip()
-
+            is_superuser = input("Please enter the superuser 1/0 (default is 1): ").strip()
+            if not is_superuser:
+                is_superuser = "1"
         if is_superuser == "1":
             is_superuser = True
         else:

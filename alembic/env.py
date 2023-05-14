@@ -8,7 +8,7 @@ from alembic import context
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
 from app.config import DB_URL_PS
-from app.models import combined_metadata
+from app.core.models import combined_metadata
 
 config = context.config
 

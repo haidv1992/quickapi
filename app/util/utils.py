@@ -1,6 +1,8 @@
 from typing import Any, Dict, List
 
-from app.quickapi.core.query import Pagination
+from app.core.query import Pagination
+from app.core.security import has_permission
+from fastapi import Request
 
 
 def sanitize_query(query: Dict[str, Any]) -> Dict[str, Any]:
@@ -44,8 +46,10 @@ def sanitize_query(query: Dict[str, Any]) -> Dict[str, Any]:
 
     return sanitized_query
 
+
 def row2dict(row):
     return {column.name: getattr(row, column.name) for column in row.__table__.columns}
+
 
 def row2dict(row):
     if not row:
@@ -53,6 +57,7 @@ def row2dict(row):
     if hasattr(row, "_asdict"):
         return row._asdict()
     return {column.name: getattr(row, column.name) for column in row.__table__.columns}
+
 
 def transform_response(records: List[Any], pagination: Dict[str, Any]) -> Dict[str, Any]:
     records_list = [row2dict(r) for r in records]
@@ -62,3 +67,12 @@ def transform_response(records: List[Any], pagination: Dict[str, Any]) -> Dict[s
     }
 
     return response
+
+
+def name_prefix(prefix):
+    def decorator(func):
+        func.__name__ = f"{prefix}:{func.__name__}"
+        return func
+
+    return decorator
+

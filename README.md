@@ -1,8 +1,14 @@
 QuickApi.
 
+install and upgrade
+
+```bash
+pip install -r requirements.txt --upgrade
+```
+
 run for dev
 ```bash
-uvicorn main:app --reload --reload-exclude '*/alembic/versions/*'
+uvicorn main:app --reload --reload-exclude '*/alembic/versions/*' --reload-exclude '*/core/permissions.py'
 ```
 
 run for prod
@@ -19,8 +25,19 @@ run migrate
 alembic upgrade head
 ```
 
-upgrade
-
+sync add package to required
 ```bash
-pip install -r requirements.txt --upgrade
+pip freeze > requirements.txt
 ```
+
+unimstall
+```bash
+pip uninstall -r requirements.txt -y
+```
+
+
+unimstall
+```bash
+pip install -r requirements.txt
+```
+

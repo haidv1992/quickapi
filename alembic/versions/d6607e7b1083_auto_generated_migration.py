@@ -1,16 +1,17 @@
 """Auto-generated migration
 
-Revision ID: 1ab4901830a2
+Revision ID: d6607e7b1083
 Revises: 
-Create Date: 2023-05-10 19:30:45.094075
+Create Date: 2023-05-14 17:57:47.623102
 
 """
+import fastapi_users_db_sqlalchemy
 from alembic import op
 import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '1ab4901830a2'
+revision = 'd6607e7b1083'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,22 +22,22 @@ def upgrade() -> None:
     op.create_table('posts',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(), nullable=True),
-    sa.Column('content', sa.Integer(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=True),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('published_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index(op.f('ix_posts_content'), 'posts', ['content'], unique=False)
     op.create_index(op.f('ix_posts_id'), 'posts', ['id'], unique=False)
     op.create_index(op.f('ix_posts_name'), 'posts', ['name'], unique=False)
     op.create_table('user',
-    sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(length=320), nullable=False),
     sa.Column('hashed_password', sa.String(length=1024), nullable=False),
     sa.Column('is_active', sa.Boolean(), nullable=False),
     sa.Column('is_superuser', sa.Boolean(), nullable=False),
     sa.Column('is_verified', sa.Boolean(), nullable=False),
+    sa.Column('id', fastapi_users_db_sqlalchemy.generics.GUID(), nullable=False),
+    sa.Column('role', sa.String(), nullable=False),
+    sa.CheckConstraint("role IN ('public', 'user', 'admin')", name='check_valid_role'),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_user_email'), 'user', ['email'], unique=True)
@@ -49,6 +50,5 @@ def downgrade() -> None:
     op.drop_table('user')
     op.drop_index(op.f('ix_posts_name'), table_name='posts')
     op.drop_index(op.f('ix_posts_id'), table_name='posts')
-    op.drop_index(op.f('ix_posts_content'), table_name='posts')
     op.drop_table('posts')
     # ### end Alembic commands ###

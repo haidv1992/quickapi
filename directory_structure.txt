@@ -1,43 +1,47 @@
 .
 ├── README.md
+├── alembic
+│   ├── README
+│   ├── env.py
+│   ├── script.py.mako
+│   └── versions
+│       ├── 9ad422fcba20_auto_generated_migration.py
 ├── alembic.ini
-├── api
-│   ├── post
-│   │   ├── db.py
-│   │   ├── model.py
-│   │   └── router.py
-│   └── user
-│       ├── db.py
-│       ├── schemas.py
-│       └── users.py
 ├── app
+│   ├── api
+│   │   ├── post
+│   │   │   ├── controller.py
+│   │   │   ├── db.py
+│   │   │   ├── model.py
+│   │   │   └── router.py
+│   │   └── user
+│   │       ├── db.py
+│   │       ├── schemas.py
+│   │       └── users.py
 │   ├── app.py
 │   ├── config.py
-│   ├── database.py
-│   ├── models.py
-│   ├── quickapi
-│   │   ├── core
-│   │   │   ├── query.py
-│   │   │   └── quickapi.py
-│   │   └── util
-│   │       └── utils.py
-│   └── routers.py
+│   ├── core
+│   │   ├── database.py
+│   │   ├── dependencies.py
+│   │   ├── init.py
+│   │   ├── models.py
+│   │   ├── query.py
+│   │   ├── quickapi.py
+│   │   ├── routers.py
+│   │   └── security.py
+│   └── util
+│       ├── __pycache__
+│       └── utils.py
 ├── cli.py
 ├── directory_structure.txt
+├── docker-compose.yml
 ├── gunicorn_conf.py
 ├── logs
 │   └── server.log
 ├── main.py
-├── migrations
-│   ├── README
-│   ├── env.py
-│   ├── migration.py
-│   ├── script.py.mako
-│   └── versions
-│       └── __pycache__
+├── migration.py
 ├── nginx.conf
 ├── requirements.txt
 ├── test_main.http
 └── venv
-
 

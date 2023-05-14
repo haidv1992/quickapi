@@ -2,12 +2,11 @@
 from datetime import datetime, timezone
 from typing import Dict, Any, Optional, List
 
-from fastapi import Query
 from pydantic import BaseModel
 from pydantic_sqlalchemy import sqlalchemy_to_pydantic
 
-from app.quickapi.core.query import FilterOperators, Pagination
-from .db import Post
+from app.core.query import FilterOperators, Pagination
+from app.api.post.db import Post
 
 
 class PostCreate(sqlalchemy_to_pydantic(Post, exclude=['id', 'created_at', 'updated_at'])):

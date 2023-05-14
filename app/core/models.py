@@ -12,7 +12,7 @@ db_files = list(api_dir.rglob('db.py'))
 def create_tables_async():
     for db_file in db_files:
         relative_path = db_file.parent.relative_to(Path(__file__).parent.parent)
-        module_path = str(relative_path).replace("/", ".")
+        module_path = "app." + str(relative_path).replace("/", ".")
         module = importlib.import_module(f"{module_path}.db")
         base = module.Base
 

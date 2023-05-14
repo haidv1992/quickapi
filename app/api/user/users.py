@@ -1,34 +1,36 @@
+# app/api/user/users.py
 import uuid
 from typing import Optional
 
-from fastapi import Depends, Request
+from fastapi import Depends, Request, Header
+from fastapi.security import HTTPBearer
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
     AuthenticationBackend,
     BearerTransport,
     JWTStrategy,
 )
-from fastapi_users.db import SQLAlchemyUserDatabase
+from fastapi_users_db_sqlalchemy import SQLAlchemyUserDatabase
 
-from api.user.db import User, get_user_db
-from app.config import SECRET_KEY
+from app.api.user.db import User, get_user_db
+from app.config import SECRET_KEY as SECRET
 
-
+auth = HTTPBearer()
 
 class UserManager(UUIDIDMixin, BaseUserManager[User, uuid.UUID]):
-    reset_password_token_secret = SECRET_KEY
-    verification_token_secret = SECRET_KEY
+    reset_password_token_secret = SECRET
+    verification_token_secret = SECRET
 
     async def on_after_register(self, user: User, request: Optional[Request] = None):
         print(f"User {user.id} has registered.")
 
     async def on_after_forgot_password(
-        self, user: User, token: str, request: Optional[Request] = None
+            self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"User {user.id} has forgot their password. Reset token: {token}")
 
     async def on_after_request_verify(
-        self, user: User, token: str, request: Optional[Request] = None
+            self, user: User, token: str, request: Optional[Request] = None
     ):
         print(f"Verification requested for user {user.id}. Verification token: {token}")
 
@@ -53,3 +55,14 @@ auth_backend = AuthenticationBackend(
 fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 
 current_active_user = fastapi_users.current_user(active=True)
+
+
+def get_user_role(authorization: Optional[str] = Header(default=None)):
+    if authorization:
+        print(current_active_user)
+        # Token is provided, process the token and retrieve the user role
+        return current_active_user.role
+
+    else:
+        # Token is not provided, return 'public'
+        return 'public'

@@ -1,12 +1,10 @@
 # app/quickapi/core/quickapi.py
 from typing import Any, Dict, List, Tuple, Type
 
-from fastapi import Request
-
-from app.database import db, Base
-from app.quickapi.core.query import Pagination, get_records, calculate_pagination, get_record, create_record, \
+from app.core.database import db, Base
+from app.core.query import Pagination, get_records, get_record, create_record, \
     QueryParameters
-from app.quickapi.util.utils import sanitize_query, transform_response, row2dict
+from app.util.utils import sanitize_query, transform_response, row2dict
 
 
 class QueryHandler:
@@ -42,7 +40,6 @@ class QuickAPI:
         return QueryHandler(table)
 
     async def find(self, table: Type[Base], query_parameters: QueryParameters):
-        print(11,query_parameters)
         sanitized_query_params = sanitize_query(query_parameters)
         query_handler = self.query(table)
         records, pagination = await query_handler.find_records(sanitized_query_params)

@@ -1,7 +1,7 @@
 from typing import Any,Dict
 
-from api.post.db import Post
-from app.quickapi.core.quickapi import QuickAPI
+from app.api.post.db import Post
+from app.core.quickapi import QuickAPI
 
 qa = QuickAPI()
 

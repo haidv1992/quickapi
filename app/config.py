@@ -14,3 +14,9 @@ DB_POST = os.getenv("DB_POST")
 TIME_ZONE = os.getenv("TIME_ZONE")
 DB_CONFIG = f"postgresql+asyncpg://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_POST}/{DB_NAME}"
 DB_URL_PS = f"postgresql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_POST}/{DB_NAME}"
+# Your roles and their hierarchy
+ROLES_HIERARCHY = {
+    "admin": ["user", "public"],
+    "user": ["public"],
+    "public": []
+}

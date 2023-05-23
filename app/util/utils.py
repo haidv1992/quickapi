@@ -1,51 +1,18 @@
 from typing import Any, Dict, List
 
-from app.core.query import Pagination
-from app.core.security import has_permission
-from fastapi import Request
+from fastapi import Request, APIRouter
 
 
-def sanitize_query(query: Dict[str, Any]) -> Dict[str, Any]:
-    sanitized_query = {}
-
-    # Sort
-    if "sort" in query:
-        sanitized_query["sort"] = query["sort"]
-
-    # Filters
-    filter_operators = [
-        "$eq", "$eqi", "$ne", "$lt", "$lte", "$gt", "$gte", "$in", "$notIn",
-        "$contains", "$notContains", "$containsi", "$notContainsi", "$null", "$notNull",
-        "$between", "$startsWith", "$startsWithi", "$endsWith", "$endsWithi",
-        "$or", "$and", "$not"
-    ]
-    filters = {}
-    for key, value in query.items():
-        if key.startswith("filters"):
-            field, operator = key.split("[")[1].split("]")
-            if operator in filter_operators:
-                filters[field] = {operator: value}
-    if filters:
-        sanitized_query["filters"] = filters
-
-    # Populate
-    if "populate" in query:
-        sanitized_query["populate"] = query["populate"]
-
-    # Fields
-    if "fields" in query:
-        sanitized_query["fields"] = query["fields"]
-
-    # Pagination
-    pagination_data = {
-        "page": int(query.get("page", 1)),
-        "page_size": int(query.get("pageSize", 10)),
-        "with_count": bool(query.get("withCount", True))
-    }
-    sanitized_query["pagination"] = Pagination(**pagination_data)
-
-    return sanitized_query
-
+def parse_populate_dict(populate_dict: Dict[str, Any]) -> List[str]:
+    populate_list = []
+    for key, value in populate_dict.items():
+        if isinstance(value, dict):
+            sub_populate = parse_populate_dict(value)
+            sub_populate_list = [f"{key}.{sub_field}" for sub_field in sub_populate]
+            populate_list.extend(sub_populate_list)
+        elif value:
+            populate_list.append(key)
+    return populate_list
 
 def row2dict(row):
     return {column.name: getattr(row, column.name) for column in row.__table__.columns}
@@ -69,10 +36,19 @@ def transform_response(records: List[Any], pagination: Dict[str, Any]) -> Dict[s
     return response
 
 
-def name_prefix(prefix):
-    def decorator(func):
-        func.__name__ = f"{prefix}:{func.__name__}"
-        return func
+class PrefixedAPIRouter(APIRouter):
+    def __init__(self, *args, name_prefix=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.name_prefix = name_prefix
 
-    return decorator
+    def add_api_route(self, *args, **kwargs):
+        if self.name_prefix:
+            if 'name' in kwargs and kwargs['name'] is not None:
+                kwargs['name'] = f"{self.name_prefix}:{kwargs['name']}"
+            else:
+                kwargs['name'] = f"{self.name_prefix}:{args[1].__name__}"
+        super().add_api_route(*args, **kwargs)
+
+
+
 

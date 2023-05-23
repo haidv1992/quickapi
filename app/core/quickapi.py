@@ -2,21 +2,27 @@
 from typing import Any, Dict, List, Tuple, Type
 
 from app.core.database import db, Base
-from app.core.query import Pagination, get_records, get_record, create_record, \
-    QueryParameters
-from app.util.utils import sanitize_query, transform_response, row2dict
+from app.core.query import Pagination, get_records, get_record, create_record, QueryParameters
+
+from app.util.utils import transform_response, row2dict
 
 
 class QueryHandler:
     def __init__(self, table: Type[Base]):
         self.table = table
 
-    async def find_records(self, sanitized_query_params: Dict[str, Any]) -> Tuple[List[Any], Pagination]:
+    async def find_records(self, query_parameters: QueryParameters) -> Tuple[List[Any], Pagination]:
         # Fetch records from the database using sanitized_query_params
         async with db.get_session() as session:
-            records, pagination = await get_records(session, self.table, **sanitized_query_params)
-        # Calculate pagination information
-
+            records, pagination = await get_records(
+                session,
+                self.table,
+                sort=query_parameters.sort,
+                filters=query_parameters.filters,
+                populate=query_parameters.populate,
+                fields=query_parameters.fields,
+                pagination=query_parameters.pagination
+            )
         return records, pagination
 
     async def find_one_record(self, id: int):
@@ -40,9 +46,8 @@ class QuickAPI:
         return QueryHandler(table)
 
     async def find(self, table: Type[Base], query_parameters: QueryParameters):
-        sanitized_query_params = sanitize_query(query_parameters)
         query_handler = self.query(table)
-        records, pagination = await query_handler.find_records(sanitized_query_params)
+        records, pagination = await query_handler.find_records(query_parameters)
         response = transform_response(records=records, pagination=pagination)
         return response
 

@@ -42,13 +42,12 @@ def has_permission(
         current_user_role: str = Depends(get_user_role)):
     route_name = request.scope.get("endpoint").__name__
     permissions_dict = get_permissions_dict()
-
     # Check if the role is valid
     if current_user_role not in ROLES_HIERARCHY:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Invalid role")
     # Check if the function is allowed for the role and its sub-roles
     allowed_roles = [current_user_role] + ROLES_HIERARCHY[current_user_role]
-    if not any(permissions_dict.get(role, {}).get(route_name, False) for role in allowed_roles):
+    if not any(permissions_dict.get(role, {}).get(route_name, True) for role in allowed_roles):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized access")
     return True
 

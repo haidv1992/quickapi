@@ -2,7 +2,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import Depends, Request, Header
+from fastapi import Depends, Request, Header, HTTPException
 from fastapi.security import HTTPBearer
 from fastapi_users import BaseUserManager, FastAPIUsers, UUIDIDMixin
 from fastapi_users.authentication import (
@@ -57,12 +57,9 @@ fastapi_users = FastAPIUsers[User, uuid.UUID](get_user_manager, [auth_backend])
 current_active_user = fastapi_users.current_user(active=True)
 
 
-def get_user_role(authorization: Optional[str] = Header(default=None)):
-    if authorization:
-        print(current_active_user)
-        # Token is provided, process the token and retrieve the user role
-        return current_active_user.role
+optional_current_user = fastapi_users.current_user(active=True, optional=True)
 
-    else:
-        # Token is not provided, return 'public'
+def get_user_role(user: User = Depends(optional_current_user)):
+    if user is None:
         return 'public'
+    return user.role

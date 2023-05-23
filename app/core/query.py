@@ -1,12 +1,15 @@
 # app/quickapi/core/query.py
+import re
 from typing import List, Optional, Any, Dict, Type
+from urllib.parse import parse_qs, parse_qsl, unquote_plus
 
+from pydantic.fields import FieldInfo
 from sqlalchemy import and_, desc, asc, update, delete
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, root_validator
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, joinedload
-from fastapi import Depends
+from fastapi import Depends, Query ,Request
 import sqlalchemy as sa
 
 from app.core.database import Base
@@ -43,16 +46,52 @@ class FilterOperators(BaseModel):
     and_: Optional[List[str]] = {"alias": "and"}
     not_: Optional[List[str]] = {"alias": "not"}
 
-
 class QueryParameters(BaseModel):
-    sort: Optional[str] = None
-    filters: Optional[str] = None
-    populate: Optional[str] = None
-    fields: Optional[str] = None
-    page: int = 1
-    page_size: int = 10
-    with_count: bool = True
+    sort: Optional[List[str]] = Field(default=["created_at"], example="created_at")
+    filters: Optional[Dict[str, Any]] = None
+    populate: Optional[List[str]] = None
+    fields: Optional[List[str]] = None
+    pagination: Pagination = Pagination()
 
+    @classmethod
+    def from_request(cls, request: Request):
+        query_string = dict(parse_qsl(unquote_plus(request.url.query)))
+        filters = {}
+        populate = []
+        fields = []
+        sort = []
+        for key, value in query_string.items():
+            if key.startswith('filters'):
+                match = re.match(r'filters\[(.*?)\]\[(.*?)\]', key)
+                if match:
+                    field, operator = match.groups()
+                    if operator is None:
+                        operator = '$eq'  # Default operator
+                    filters.setdefault(field, {})[operator] = value
+                else:
+                    # If the key doesn't match the pattern, assume it's a field with an operator of $eq
+                    field = key.split('[')[1].rstrip(']')
+                    filters.setdefault(field, {})['$eq'] = value
+            elif key.startswith('populate'):
+                populate.append(value)
+            elif key.startswith('fields'):
+                fields.append(value)
+            elif key.startswith('sort'):
+                sort += value.split(',')
+
+        # Pagination
+        pagination_data = {
+            "page": int(query_string.get("page", 1)),
+            "page_size": int(query_string.get("pageSize", 10)),
+            "with_count": bool(query_string.get("withCount", True))
+        }
+        query_string['filters'] = filters
+        query_string['populate'] = populate
+        query_string['fields'] = fields
+        query_string['sort'] = sort
+        query_string['pagination'] = pagination_data
+        print(query_string)
+        return cls.parse_obj(query_string)
 
 def calculate_pagination(total_records: int, page: int = 1, page_size: int = 10) -> Dict[str, Any]:
     total_pages = (total_records + page_size - 1) // page_size
@@ -63,7 +102,6 @@ def calculate_pagination(total_records: int, page: int = 1, page_size: int = 10)
         "pageCount": total_pages,
         "total": total_records
     }
-
     return pagination
 
 
@@ -79,9 +117,9 @@ def apply_sort(query, table, sort: Optional[List[str]]):
     if sort:
         for sort_item in sort:
             if sort_item.startswith("-"):
-                query = query.order_by(desc(getattr(table.c, sort_item[1:])))
+                query = query.order_by(desc(getattr(table, sort_item[1:])))  # Corrected line
             else:
-                query = query.order_by(asc(getattr(table.c, sort_item)))
+                query = query.order_by(asc(getattr(table, sort_item)))  # Corrected line
 
     return query
 
@@ -89,7 +127,7 @@ def apply_sort(query, table, sort: Optional[List[str]]):
 def apply_filters(query, table, filters: Optional[List[str]]):
     if filters:
         filter_conditions = []
-        for field, operators in filters.dict().items():
+        for field, operators in filters.items():
             if not operators:
                 continue
 
@@ -98,7 +136,7 @@ def apply_filters(query, table, filters: Optional[List[str]]):
                 if value is None:
                     continue
 
-                column = getattr(table.c, field)
+                column = getattr(table, field)  # Corrected line
                 if operator == "eq":
                     field_filter_conditions.append(column == value)
                 elif operator == "eqi":
@@ -149,7 +187,7 @@ def apply_filters(query, table, filters: Optional[List[str]]):
 
 def apply_fields(query, table, fields: Optional[List[str]]):
     if fields:
-        selected_columns = [getattr(table.c, field) for field in fields]
+        selected_columns = [getattr(table, field) for field in fields]  # Corrected line
         query = query.with_only_columns(selected_columns)
 
     return query
@@ -158,11 +196,11 @@ def apply_fields(query, table, fields: Optional[List[str]]):
 async def get_records(
         db: Session,
         table: Type[Base],
+        pagination: Pagination,
         sort: Optional[List[str]] = None,
         filters: Optional[FilterOperators] = None,
         populate: Optional[List[str]] = None,
         fields: Optional[List[str]] = None,
-        pagination: Pagination = Depends(),
 ) -> Any:
     query = select(table).offset((pagination.page - 1) * pagination.page_size).limit(pagination.page_size)
     # Apply sort
@@ -195,6 +233,7 @@ async def get_records(
 
     return records, pagination
 
+
 async def get_record(
         db: Session,
         table: Type[Base],
@@ -205,6 +244,7 @@ async def get_record(
         return record
     except NoResultFound:
         return None
+
 
 async def create_record(
         db: Session,
@@ -219,6 +259,7 @@ async def create_record(
         return new_record
     except NoResultFound:
         return None
+
 
 async def create_records(
         db: Session,
@@ -237,6 +278,7 @@ async def create_records(
     except NoResultFound:
         return None
 
+
 async def bulk_update(
         db: Session,
         table: Type[Base],
@@ -254,6 +296,7 @@ async def bulk_update(
     except NoResultFound:
         return None
 
+
 async def bulk_insert(
         db: Session,
         table: Type[Base],
@@ -265,6 +308,7 @@ async def bulk_insert(
         await db.commit()
     except NoResultFound:
         return None
+
 
 async def bulk_delete(
         db: Session,
